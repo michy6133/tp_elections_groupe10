@@ -30,7 +30,6 @@ class _ShowElectPageState extends State<ShowElectPage> {
     return null; // retourne null pour satisfaire le type de retour dynamic
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,41 +60,20 @@ class _ShowElectPageState extends State<ShowElectPage> {
               ),
             ),
             // Candidates
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Candidates: ${_candidates.length}'),
-                  FloatingActionButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AddElectPage(
-                            addCandidate: _addCandidate, // passe la fonction _addCandidate à la deuxième page
-                          ),
-                        ),
-                      );
-                    },
-                    child: const Icon(Icons.add),
-                  ),
-
-                ],
-              ),
-            ),
-            // Display candidates
             Expanded(
               child: ListView.builder(
                 itemCount: _candidates.length,
                 itemBuilder: (context, index) {
                   final candidate = _candidates[index];
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundImage: FileImage(candidate['image']),
+                  return Container(
+                    color: Colors.white,
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundImage: FileImage(candidate['image']),
+                      ),
+                      title: Text(candidate['name']),
+                      subtitle: Text(candidate['party']),
                     ),
-                    title: Text(candidate['name']),
-                    subtitle: Text(candidate['party']),
                   );
                 },
               ),
@@ -103,24 +81,29 @@ class _ShowElectPageState extends State<ShowElectPage> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.note),
-            label: 'Vote',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue[800],
-        onTap: _onItemTapped,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AddElectPage(
+                addCandidate: _addCandidate, // passe la fonction _addCandidate à la deuxième page
+              ),
+            ),
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.white,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Candidates: ${_candidates.length}'),
+            SizedBox(width: 8),
+          ],
+        ),
       ),
     );
   }
