@@ -3,7 +3,9 @@ import 'addelected.dart';
 import 'candidates.dart';
 
 class ShowElectPage extends StatefulWidget {
-  const ShowElectPage({super.key});
+  const ShowElectPage({super.key, required this.candidate});
+
+  final Candidate candidate;
 
   @override
   _ShowElectPageState createState() => _ShowElectPageState();
@@ -18,6 +20,12 @@ class _ShowElectPageState extends State<ShowElectPage> {
     setState(() {
       _candidates.add(candidate);
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _addCandidate(widget.candidate);
   }
 
   @override

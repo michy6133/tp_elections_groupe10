@@ -4,8 +4,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-import 'package:tp_election/pages/candidates.dart';
-import 'package:tp_election/pages/showelect.dart';
+import 'candidates.dart';
+import 'showelect.dart';
 
 class AddElectPage extends StatefulWidget {
   @override
@@ -76,15 +76,21 @@ class _AddElectPageState extends State<AddElectPage> {
         request.files.add(imageMultipartFile);
       }
 
-      final response = await request.send();
+      try {
+        final response = await request.send();
 
-      if (response.statusCode == 200) {
-        final responseBody = await response.stream.bytesToString();
-        final createdCandidate = Candidate.fromJson(json.decode(responseBody));
-        Navigator.pop(context, createdCandidate);
-      } else {
+        if (response.statusCode == 200) {
+          final responseBody = await response.stream.bytesToString();
+          final createdCandidate = Candidate.fromJson(json.decode(responseBody));
+          Navigator.pop(context, createdCandidate);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to add candidate')),
+          );
+        }
+      } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to add candidate')),
+          const SnackBar(content: Text('Network error: Please check your internet connection')),
         );
       }
 
