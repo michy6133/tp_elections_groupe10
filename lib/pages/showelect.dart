@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:tp_election/pages/candidates.dart';
 import 'addelected.dart';
 
@@ -11,7 +13,28 @@ class ShowElectPage extends StatefulWidget {
 
 class _ShowElectPageState extends State<ShowElectPage> {
   int _selectedIndex = 0;
-  final List<Candidate> _candidates = [];
+  List<Candidate> _candidates = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCandidates();
+  }
+
+  Future<void> _fetchCandidates() async {
+    final response = await http.get(Uri.parse('https://api.example.com/login'));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonCandidates = json.decode(response.body);
+      setState(() {
+        _candidates = jsonCandidates.map((json) => Candidate.fromJson(json)).toList();
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to fetch candidates')),
+      );
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -23,6 +46,21 @@ class _ShowElectPageState extends State<ShowElectPage> {
     setState(() {
       _candidates.add(candidate);
     });
+    _uploadCandidate(candidate);
+  }
+
+  Future<void> _uploadCandidate(Candidate candidate) async {
+    final response = await http.post(
+      Uri.parse('https://api.example.com/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(candidate.toJson()),
+    );
+
+    if (response.statusCode != 201) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to add candidate')),
+      );
+    }
   }
 
   @override
@@ -64,8 +102,8 @@ class _ShowElectPageState extends State<ShowElectPage> {
                     color: Colors.white,
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundImage: candidate.image != null
-                            ? FileImage(candidate.image!)
+                        backgroundImage: candidate.imageUrl.isNotEmpty
+                            ? NetworkImage(candidate.imageUrl)
                             : null,
                       ),
                       title: Text('${candidate.name} ${candidate.surname}'),

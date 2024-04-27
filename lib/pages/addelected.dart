@@ -1,5 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:tp_election/pages/candidates.dart';
 
@@ -34,23 +37,57 @@ class _AddElectPageState extends State<AddElectPage> {
       _formKey.currentState!.save();
 
       final candidate = Candidate(
+        id: 0, // L'ID sera attribué par le serveur
         name: _name,
         surname: _surname,
         party: _party,
         bio: _bio,
-        image: _image,
+        imageUrl: '', // L'URL de l'image sera attribuée par le serveur
       );
 
-      widget.addCandidate(candidate);
-      Navigator.pop(context);
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('https://api.example.com/login'),
+      );
+
+      request.fields['name'] = _name;
+      request.fields['surname'] = _surname;
+      request.fields['party'] = _party;
+      request.fields['bio'] = _bio;
+
+      if (_image != null) {
+        final imageStream = http.ByteStream(_image!.openRead());
+        final imageLength = await _image!.length();
+        final imageMultipartFile = http.MultipartFile(
+          'image',
+          imageStream,
+          imageLength,
+          filename: _image!.path.split('/').last,
+        );
+        request.files.add(imageMultipartFile);
+      }
+
+      final response = await request.send();
+
+      if (response.statusCode == 201) {
+        final responseBody = await response.stream.bytesToString();
+        final createdCandidate = Candidate.fromJson(json.decode(responseBody));
+        widget.addCandidate(createdCandidate);
+        Navigator.pop(context, createdCandidate); // Renvoie le candidat nouvellement créé à la page précédente
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to add candidate')),
+        );
+      }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add Candidate'),
+        title: const Text('Add Candidate'),
       ),
       body: SingleChildScrollView(
         child: Padding(
