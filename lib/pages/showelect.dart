@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:tp_election/pages/candidates.dart';
 import 'addelected.dart';
 
 class ShowElectPage extends StatefulWidget {
@@ -11,7 +11,7 @@ class ShowElectPage extends StatefulWidget {
 
 class _ShowElectPageState extends State<ShowElectPage> {
   int _selectedIndex = 0;
-  final List<Map<String, dynamic>> _candidates = [];
+  final List<Candidate> _candidates = [];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -19,15 +19,10 @@ class _ShowElectPageState extends State<ShowElectPage> {
     });
   }
 
-  dynamic _addCandidate(String name, String party, File image) {
+  void _addCandidate(Candidate candidate) {
     setState(() {
-      _candidates.add({
-        'name': name,
-        'party': party,
-        'image': image,
-      });
+      _candidates.add(candidate);
     });
-    return null; // retourne null pour satisfaire le type de retour dynamic
   }
 
   @override
@@ -69,10 +64,12 @@ class _ShowElectPageState extends State<ShowElectPage> {
                     color: Colors.white,
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundImage: FileImage(candidate['image']),
+                        backgroundImage: candidate.image != null
+                            ? FileImage(candidate.image!)
+                            : null,
                       ),
-                      title: Text(candidate['name']),
-                      subtitle: Text(candidate['party']),
+                      title: Text('${candidate.name} ${candidate.surname}'),
+                      subtitle: Text(candidate.party),
                     ),
                   );
                 },
@@ -87,7 +84,7 @@ class _ShowElectPageState extends State<ShowElectPage> {
             context,
             MaterialPageRoute(
               builder: (context) => AddElectPage(
-                addCandidate: _addCandidate, // passe la fonction _addCandidate à la deuxième page
+                addCandidate: (candidate) => _addCandidate(candidate),
               ),
             ),
           );
@@ -101,7 +98,7 @@ class _ShowElectPageState extends State<ShowElectPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('Candidates: ${_candidates.length}'),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
           ],
         ),
       ),

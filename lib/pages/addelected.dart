@@ -1,9 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:tp_election/pages/candidates.dart';
 
 class AddElectPage extends StatefulWidget {
-  final Function(String, String, File) addCandidate;
+  final Function(Candidate) addCandidate;
 
   const AddElectPage({required this.addCandidate, super.key});
 
@@ -14,8 +15,10 @@ class AddElectPage extends StatefulWidget {
 class _AddElectPageState extends State<AddElectPage> {
   final _formKey = GlobalKey<FormState>();
   String _name = '';
+  String _surname = '';
   String _party = '';
-  late File _image = File('');
+  String _bio = '';
+  File? _image;
 
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await ImagePicker().pickImage(source: source);
@@ -23,6 +26,23 @@ class _AddElectPageState extends State<AddElectPage> {
       setState(() {
         _image = File(pickedFile.path);
       });
+    }
+  }
+
+  Future<void> _submitForm() async {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+
+      final candidate = Candidate(
+        name: _name,
+        surname: _surname,
+        party: _party,
+        bio: _bio,
+        image: _image,
+      );
+
+      widget.addCandidate(candidate);
+      Navigator.pop(context);
     }
   }
 
@@ -46,7 +66,7 @@ class _AddElectPageState extends State<AddElectPage> {
                   },
                   child: CircleAvatar(
                     radius: 50,
-                    backgroundImage: _image != null ? FileImage(_image) : null,
+                    backgroundImage: _image != null ? FileImage(_image!) : null,
                     child: _image == null ? const Icon(Icons.camera_alt) : null,
                   ),
                 ),
@@ -63,16 +83,18 @@ class _AddElectPageState extends State<AddElectPage> {
                     _name = value!;
                   },
                 ),
-                // Bio
+                // Surname
                 TextFormField(
-                  decoration: const InputDecoration(labelText: 'Bio'),
+                  decoration: const InputDecoration(labelText: 'Surname'),
                   validator: (value) {
                     if (value!.isEmpty) {
-                      return 'Please enter a bio';
+                      return 'Please enter a surname';
                     }
                     return null;
                   },
-                  onSaved: (value) {},
+                  onSaved: (value) {
+                    _surname = value!;
+                  },
                 ),
                 // Party
                 TextFormField(
@@ -87,15 +109,22 @@ class _AddElectPageState extends State<AddElectPage> {
                     _party = value!;
                   },
                 ),
+                // Bio
+                TextFormField(
+                  decoration: const InputDecoration(labelText: 'Biography'),
+                  validator: (value) {
+                    if (value!.isEmpty) {
+                      return 'Please enter a biography';
+                    }
+                    return null;
+                  },
+                  onSaved: (value) {
+                    _bio = value!;
+                  },
+                ),
                 // Add button
                 ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      _formKey.currentState!.save();
-                      widget.addCandidate(_name, _party, _image);
-                      Navigator.pop(context);
-                    }
-                  },
+                  onPressed: _submitForm,
                   child: const Text('Add'),
                 ),
               ],
