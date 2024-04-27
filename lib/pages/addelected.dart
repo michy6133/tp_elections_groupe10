@@ -22,6 +22,7 @@ class _AddElectPageState extends State<AddElectPage> {
   String _party = '';
   String _bio = '';
   File? _image;
+  bool _isLoading = false;
 
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await ImagePicker().pickImage(source: source);
@@ -36,6 +37,10 @@ class _AddElectPageState extends State<AddElectPage> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
+      setState(() {
+        _isLoading = true;
+      });
+
       final candidate = Candidate(
         id: 0, // L'ID sera attribué par le serveur
         name: _name,
@@ -47,7 +52,7 @@ class _AddElectPageState extends State<AddElectPage> {
 
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse('https://api.example.com/login'),
+        Uri.parse('https://jsonplaceholder.typicode.com/posts'),
       );
 
       request.fields['name'] = _name;
@@ -73,15 +78,18 @@ class _AddElectPageState extends State<AddElectPage> {
         final responseBody = await response.stream.bytesToString();
         final createdCandidate = Candidate.fromJson(json.decode(responseBody));
         widget.addCandidate(createdCandidate);
-        Navigator.pop(context, createdCandidate); // Renvoie le candidat nouvellement créé à la page précédente
+        Navigator.pop(context, createdCandidate);// Renvoie le candidat nouvellement créé à la page précédente
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to add candidate')),
         );
       }
+
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +97,9 @@ class _AddElectPageState extends State<AddElectPage> {
       appBar: AppBar(
         title: const Text('Add Candidate'),
       ),
-      body: SingleChildScrollView(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Form(

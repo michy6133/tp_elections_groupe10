@@ -14,6 +14,7 @@ class ShowElectPage extends StatefulWidget {
 class _ShowElectPageState extends State<ShowElectPage> {
   int _selectedIndex = 0;
   List<Candidate> _candidates = [];
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -22,17 +23,25 @@ class _ShowElectPageState extends State<ShowElectPage> {
   }
 
   Future<void> _fetchCandidates() async {
-    final response = await http.get(Uri.parse('https://api.example.com/login'));
+    setState(() {
+      _isLoading = true;
+    });
+
+    final response = await http.get(Uri.parse('https://jsonplaceholder.typicode.com/posts'));
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonCandidates = json.decode(response.body);
       setState(() {
         _candidates = jsonCandidates.map((json) => Candidate.fromJson(json)).toList();
+        _isLoading = false;
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to fetch candidates')),
       );
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -45,20 +54,26 @@ class _ShowElectPageState extends State<ShowElectPage> {
   void _addCandidate(Candidate candidate) {
     setState(() {
       _candidates.add(candidate);
+      _isLoading = true; // Définir _isLoading sur true avant d'appeler _uploadCandidate()
     });
-    _uploadCandidate(candidate);
+    _uploadCandidate(candidate).then((_) {
+      setState(() {
+        _isLoading = false; // Définir _isLoading sur false une fois que la réponse a été reçue
+      });
+    });
   }
 
   Future<void> _uploadCandidate(Candidate candidate) async {
     final response = await http.post(
-      Uri.parse('https://api.example.com/login'),
+      Uri.parse('https://jsonplaceholder.typicode.com/posts'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(candidate.toJson()),
     );
 
-    if (response.statusCode != 201) {
+    if (response.statusCode != 200) {
+      final errorMessage = json.decode(response.body)['message'];
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to add candidate')),
+        SnackBar(content: Text('Failed to add candidate: $errorMessage')),
       );
     }
   }
@@ -76,7 +91,9 @@ class _ShowElectPageState extends State<ShowElectPage> {
           ),
         ],
       ),
-      body: Container(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Container(
         color: Colors.grey[300],
         child: Column(
           children: [
@@ -136,7 +153,7 @@ class _ShowElectPageState extends State<ShowElectPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('Candidates: ${_candidates.length}'),
-            const SizedBox(width: 8),
+            if (_isLoading) const CircularProgressIndicator(), // Afficher l'indicateur de chargement uniquement lorsque _isLoading est true
           ],
         ),
       ),
