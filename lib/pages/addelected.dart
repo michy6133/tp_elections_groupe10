@@ -5,12 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:tp_election/pages/candidates.dart';
+import 'package:tp_election/pages/showelect.dart';
 
 class AddElectPage extends StatefulWidget {
-  final Function(Candidate) addCandidate;
-
-  const AddElectPage({required this.addCandidate, super.key});
-
   @override
   _AddElectPageState createState() => _AddElectPageState();
 }
@@ -24,8 +21,8 @@ class _AddElectPageState extends State<AddElectPage> {
   File? _image;
   bool _isLoading = false;
 
-  Future<void> _pickImage(ImageSource source) async {
-    final pickedFile = await ImagePicker().pickImage(source: source);
+  Future<void> _pickImage() async {
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
@@ -42,23 +39,30 @@ class _AddElectPageState extends State<AddElectPage> {
       });
 
       final candidate = Candidate(
-        id: 0, // L'ID sera attribué par le serveur
+        id: 0,
         name: _name,
         surname: _surname,
         party: _party,
         bio: _bio,
-        imageUrl: '', // L'URL de l'image sera attribuée par le serveur
+        imageUrl: '',
       );
+
+      final requestBody = {
+        'name': _name,
+        'surname': _surname,
+        'party': _party,
+        'bio': _bio,
+      };
+
+      final jsonBody = json.encode(requestBody);
 
       final request = http.MultipartRequest(
         'POST',
         Uri.parse('https://jsonplaceholder.typicode.com/posts'),
       );
 
-      request.fields['name'] = _name;
-      request.fields['surname'] = _surname;
-      request.fields['party'] = _party;
-      request.fields['bio'] = _bio;
+      request.headers['Content-Type'] = 'application/json';
+      request.fields['data'] = jsonBody;
 
       if (_image != null) {
         final imageStream = http.ByteStream(_image!.openRead());
@@ -74,11 +78,10 @@ class _AddElectPageState extends State<AddElectPage> {
 
       final response = await request.send();
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 200) {
         final responseBody = await response.stream.bytesToString();
         final createdCandidate = Candidate.fromJson(json.decode(responseBody));
-        widget.addCandidate(createdCandidate);
-        Navigator.pop(context, createdCandidate);// Renvoie le candidat nouvellement créé à la page précédente
+        Navigator.pop(context, createdCandidate);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to add candidate')),
@@ -108,9 +111,7 @@ class _AddElectPageState extends State<AddElectPage> {
               children: [
                 // Candidate image
                 GestureDetector(
-                  onTap: () {
-                    _pickImage(ImageSource.gallery);
-                  },
+                  onTap: _pickImage,
                   child: CircleAvatar(
                     radius: 50,
                     backgroundImage: _image != null ? FileImage(_image!) : null,

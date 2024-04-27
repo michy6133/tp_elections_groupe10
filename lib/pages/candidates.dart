@@ -1,4 +1,3 @@
-
 class Candidate {
   final int id;
   final String name;
@@ -25,16 +24,5 @@ class Candidate {
       bio: json['bio'],
       imageUrl: json['image_url'],
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'surname': surname,
-      'party': party,
-      'bio': bio,
-      'image_url': imageUrl,
-    };
   }
 }
