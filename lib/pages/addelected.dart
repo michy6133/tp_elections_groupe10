@@ -5,9 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'candidates.dart';
-import 'showelect.dart';
 
 class AddElectPage extends StatefulWidget {
+  const AddElectPage({super.key});
+
   @override
   _AddElectPageState createState() => _AddElectPageState();
 }
@@ -34,6 +35,11 @@ class _AddElectPageState extends State<AddElectPage> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
+      assert(_name != null);
+      assert(_surname != null);
+      assert(_party != null);
+      assert(_bio != null);
+
       setState(() {
         _isLoading = true;
       });
@@ -55,48 +61,34 @@ class _AddElectPageState extends State<AddElectPage> {
       };
 
       final jsonBody = json.encode(requestBody);
-
-      final request = http.MultipartRequest(
-        'POST',
-        Uri.parse('https://jsonplaceholder.typicode.com/posts'),
-      );
-
-      request.headers['Content-Type'] = 'application/json';
-      request.fields['data'] = jsonBody;
-
-      if (_image != null) {
-        final imageStream = http.ByteStream(_image!.openRead());
-        final imageLength = await _image!.length();
-        final imageMultipartFile = http.MultipartFile(
-          'image',
-          imageStream,
-          imageLength,
-          filename: _image!.path.split('/').last,
-        );
-        request.files.add(imageMultipartFile);
-      }
+      final client = http.Client();
 
       try {
-        final response = await request.send();
+        final response = await client.post(
+          Uri.parse('https://jsonplaceholder.typicode.com/posts'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonBody,
+        );
 
-        if (response.statusCode == 200) {
-          final responseBody = await response.stream.bytesToString();
-          final createdCandidate = Candidate.fromJson(json.decode(responseBody));
+        if (response.statusCode == 201) {
+          final createdCandidate = Candidate.fromJson(json.decode(response.body));
           Navigator.pop(context, createdCandidate);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to add candidate')),
+            SnackBar(content: Text('Failed to add candidate: Error ${response.statusCode}')),
           );
         }
       } catch (e) {
+        print('Error: $e'); // Imprimer l'exception dans la console
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Network error: Please check your internet connection')),
         );
+      } finally {
+        client.close();
+        setState(() {
+          _isLoading = false;
+        });
       }
-
-      setState(() {
-        _isLoading = false;
-      });
     }
   }
 
@@ -178,7 +170,7 @@ class _AddElectPageState extends State<AddElectPage> {
                 ),
                 // Add button
                 ElevatedButton(
-                  onPressed: _submitForm,
+                  onPressed: _image == null ? null : _submitForm,
                   child: const Text('Add'),
                 ),
               ],

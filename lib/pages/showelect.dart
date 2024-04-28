@@ -3,29 +3,21 @@ import 'addelected.dart';
 import 'candidates.dart';
 
 class ShowElectPage extends StatefulWidget {
-  const ShowElectPage({super.key, required this.candidate});
-
-  final Candidate candidate;
+  const ShowElectPage({super.key, required Candidate candidate});
 
   @override
   _ShowElectPageState createState() => _ShowElectPageState();
 }
 
 class _ShowElectPageState extends State<ShowElectPage> {
-  int _selectedIndex = 0;
-  List<Candidate> _candidates = [];
-  bool _isLoading = false;
+  final int _selectedIndex = 0;
+  final List<Candidate> _candidates = [];
+  final bool _isLoading = false;
 
   void _addCandidate(Candidate candidate) {
     setState(() {
       _candidates.add(candidate);
     });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _addCandidate(widget.candidate);
   }
 
   @override
@@ -86,7 +78,7 @@ class _ShowElectPageState extends State<ShowElectPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => AddElectPage(),
+              builder: (context) => const AddElectPage(),
             ),
           ).then((value) {
             if (value != null) {
